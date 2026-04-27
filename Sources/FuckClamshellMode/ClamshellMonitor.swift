@@ -3,8 +3,19 @@ import IOKit
 import IOKit.pwr_mgt
 import CoreGraphics
 
-// Bit 0 of the kIOPMMessageClamshellStateChange message argument indicates
-// whether the lid is closed (1) or open (0).
+// kIOPMMessageClamshellStateChange is not exported in the public macOS SDK
+// headers.  Its value is computed from the XNU source:
+//   iokit_family_msg(sub_iokit_powermanagement, 0x100)
+//   = sys_iokit | sub_iokit_powermanagement | 0x100
+//   = err_system(0x38) | err_sub(13) | 0x100
+//   = 0xE0000000 | 0x34000 | 0x100
+//   = 0xE0034100
+// See: https://github.com/apple/darwin-xnu/blob/main/iokit/IOKit/pwr_mgt/IOPM.h#L433
+private let kIOPMMessageClamshellStateChange: UInt32 = 0xE0034100
+
+// Bits in the kIOPMMessageClamshellStateChange message argument:
+//   bit 0 (kClamshellStateBit): lid closed (1) or open (0)
+//   bit 1 (kClamshellSleepBit): clamshell close will trigger sleep (1) or not (0)
 private let kClamshellStateBit: UInt = 0x01
 
 // C-compatible IOKit interest callback.
@@ -102,7 +113,7 @@ final class ClamshellMonitor {
     /// Called from `pmDomainChange`; runs on the monitor's serial dispatch queue.
     func handleMessage(type messageType: UInt32, argument messageArgument: UnsafeMutableRawPointer?) {
         // Ignore everything that is not a clamshell-state change.
-        guard messageType == UInt32(kIOPMMessageClamshellStateChange) else { return }
+        guard messageType == kIOPMMessageClamshellStateChange else { return }
 
         let arg = UInt(bitPattern: messageArgument)
         let lidClosed = (arg & kClamshellStateBit) != 0
