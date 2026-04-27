@@ -135,23 +135,26 @@ final class ClamshellMonitor {
 
     // MARK: - Screen lock
 
-    /// Locks the current user session by suspending it via CGSession.
+    /// Locks the current user session using `SACLockScreenImmediate` from the
+    /// private `login` framework.  This is the same private API used by macOS
+    /// system components and works even when `CGSession -suspend` is absent.
     private func lockScreen() {
-        // CGSession -suspend is the standard, public way to lock a macOS user
-        // session from a background process. The binary has been at this path
-        // since at least macOS 10.10 and remains present through macOS 15.
-        let cgSessionPath = "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession"
-        guard FileManager.default.fileExists(atPath: cgSessionPath) else {
-            NSLog("FuckClamshellMode: CGSession binary not found at expected path — cannot lock screen")
+        let loginFrameworkPath = "/System/Library/PrivateFrameworks/login.framework/login"
+        guard let handle = dlopen(loginFrameworkPath, RTLD_LAZY) else {
+            NSLog("FuckClamshellMode: failed to open login.framework: %@",
+                  String(cString: dlerror()))
             return
         }
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: cgSessionPath)
-        task.arguments = ["-suspend"]
-        do {
-            try task.run()
-        } catch {
-            NSLog("FuckClamshellMode: failed to lock screen: %@", error.localizedDescription)
+        defer { dlclose(handle) }
+
+        guard let sym = dlsym(handle, "SACLockScreenImmediate") else {
+            NSLog("FuckClamshellMode: SACLockScreenImmediate not found in login.framework: %@",
+                  String(cString: dlerror()))
+            return
         }
+
+        typealias SACLockScreenImmediateFn = @convention(c) () -> Void
+        let lockFn = unsafeBitCast(sym, to: SACLockScreenImmediateFn.self)
+        lockFn()
     }
 }

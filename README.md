@@ -11,8 +11,8 @@ The service registers for `kIOPMMessageClamshellStateChange` messages through
 used by [Objective-See's DoNotDisturb](https://github.com/objective-see/DoNotDisturb/blob/master/Daemon/Monitor.m).
 
 When the lid-close event is received **and** at least one external (non
-built-in) display is active, `CGSession -suspend` is invoked to lock the
-current user session immediately.
+built-in) display is active, `SACLockScreenImmediate` from the macOS private
+`login` framework is called to lock the current user session immediately.
 
 ## Requirements
 
