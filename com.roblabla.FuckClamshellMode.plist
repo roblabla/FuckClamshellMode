@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Unique identifier for this LaunchAgent. -->
+    <key>Label</key>
+    <string>com.roblabla.FuckClamshellMode</string>
+
+    <!-- Path to the compiled binary after running `swift build -c release`. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/FuckClamshellMode</string>
+    </array>
+
+    <!-- Start the agent immediately when the user logs in. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart the agent if it exits for any reason. -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Write stdout/stderr to the system log so output is visible in Console.app. -->
+    <key>StandardOutPath</key>
+    <string>/tmp/FuckClamshellMode.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/FuckClamshellMode.log</string>
+</dict>
+</plist>
